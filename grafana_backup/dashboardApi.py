@@ -318,13 +318,14 @@ def update_folder_permissions(payload, grafana_url, http_post_headers, verify_ss
 
 def get_folder_id(dashboard, grafana_url, http_post_headers, verify_ssl, client_cert, debug):
     folder_uid = ""
-    try:
+    if 'folderUid' in dashboard['meta'].keys():
         folder_uid = dashboard['meta']['folderUid']
-    except (KeyError):
+    if folder_uid == "":
         matches = re.search('dashboards\/f\/(.*)\/.*', dashboard['meta']['folderUrl'])
-        folder_uid = matches.group(1)
+        if matches is not None:
+            folder_uid = matches.group(1)
 
-    if (folder_uid != ""):
+    if folder_uid != "":
         print("debug: quering with uid {}".format(folder_uid))
         response = get_folder(folder_uid, grafana_url, http_post_headers, verify_ssl, client_cert, debug)
         if isinstance(response[1], dict):
@@ -337,6 +338,8 @@ def get_folder_id(dashboard, grafana_url, http_post_headers, verify_ssl, client_
         except (KeyError):
             return 0
     else:
+        if 'folderId' in dashboard['meta'].keys():
+            return dashboard['meta']['folderId']
         return 0
 
 
