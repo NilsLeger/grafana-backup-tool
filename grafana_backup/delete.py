@@ -14,9 +14,9 @@ import sys
 def main(args, settings):
     arg_components = args.get('--components', False)
 
-    # Backups, saved in grafana-backup version < 1.2.4 do not contain enough data for correct restoring of team-members
+    # Backups, saved in grafana-backup version < 1.2.5 do not contain enough data for correct restoring of team-members
     # Therefore, teams removal is disabled by default
-    # But can be called explicitly if you SURE that backup for team-members created in 1.2.4+
+    # But can be called explicitly if you SURE that backup for team-members created in 1.2.5+
     delete_functions = {'dashboards': delete_dashboards,
                         'datasources': delete_datasources,
                         'folders': delete_folders,
