@@ -64,6 +64,10 @@ def get_individual_team_members_and_save(teams, folder_path, log_file, pretty_pr
                                                                client_cert, debug):
                     team_member_identifier = "{0}_{1}".format(team_member['userId'], team_member['teamId'])
 
+                    # Explicitly saving of team name to correctly restore team members
+                    # See create_team_member.py for details
+                    team_member['teamName'] = to_python2_and_3_compatible_string(team['name'])
+
                     save_team_member(
                         to_python2_and_3_compatible_string(team['name']),
                         to_python2_and_3_compatible_string(str(team_member_identifier)),

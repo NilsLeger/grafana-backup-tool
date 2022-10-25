@@ -7,14 +7,16 @@ from grafana_backup.delete_alert_channels import main as delete_alert_channels
 from grafana_backup.delete_snapshots import main as delete_snapshots
 from grafana_backup.delete_annotations import main as delete_annotations
 from grafana_backup.delete_team_members import main as delete_team_members
+from grafana_backup.delete_teams import main as delete_teams
 import sys
 
 
 def main(args, settings):
     arg_components = args.get('--components', False)
 
-    # By default, teams should not be deleted. Sinces teams don't have unique ids across instances, they would be
-    # recreated with different ids, therefore loosing references to folder permissions and team members.
+    # Backups, saved in grafana-backup version < 1.2.5 do not contain enough data for correct restoring of team-members
+    # Therefore, teams removal is disabled by default
+    # But can be called explicitly if you SURE that backup for team-members created in 1.2.5+
     delete_functions = {'dashboards': delete_dashboards,
                         'datasources': delete_datasources,
                         'folders': delete_folders,
@@ -40,7 +42,10 @@ def main(args, settings):
 
         # Delete only the components that provided via an argument
         for delete_function in arg_components_list:
-            delete_functions[delete_function](args, settings)
+            if delete_function == 'teams':
+                delete_teams(args, settings)
+            else:
+                delete_functions[delete_function](args, settings)
     else:
         # delete every component
         for delete_function in delete_functions.keys():

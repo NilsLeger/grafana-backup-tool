@@ -1,9 +1,9 @@
 import re
 import json
 import requests
+import urllib.parse
 import sys
 from grafana_backup.commons import log_response, to_python2_and_3_compatible_string
-
 
 def health_check(grafana_url, http_get_headers, verify_ssl, client_cert, debug):
     url = '{0}/api/health'.format(grafana_url)
@@ -126,6 +126,21 @@ def search_teams(grafana_url, http_get_headers, verify_ssl, client_cert, debug):
     print("search teams in grafana: {0}".format(url))
     return send_grafana_get(url, http_get_headers, verify_ssl, client_cert, debug)
 
+
+def get_team_by_name(name, grafana_url, http_get_headers, verify_ssl, client_cert, debug):
+    response = send_grafana_get('{0}/api/teams/search?name={1}'.format(grafana_url, urllib.parse.quote(name)),
+                                http_get_headers, verify_ssl, client_cert, debug)
+    if isinstance(response[1], dict):
+        teams = response[1]
+    else:
+        teams = json.loads(response[1])
+    try:
+        for team in teams['teams']:
+            if team['name'] == name:
+                return team['id']
+    except KeyError:
+        return 0
+    return 0
 
 def create_team(team, grafana_url, http_post_headers, verify_ssl, client_cert, debug):
     url = '{0}/api/teams'.format(grafana_url)
@@ -303,13 +318,14 @@ def update_folder_permissions(payload, grafana_url, http_post_headers, verify_ss
 
 def get_folder_id(dashboard, grafana_url, http_post_headers, verify_ssl, client_cert, debug):
     folder_uid = ""
-    try:
+    if 'folderUid' in dashboard['meta'].keys():
         folder_uid = dashboard['meta']['folderUid']
-    except (KeyError):
+    if folder_uid == "":
         matches = re.search('dashboards\/f\/(.*)\/.*', dashboard['meta']['folderUrl'])
-        folder_uid = matches.group(1)
+        if matches is not None:
+            folder_uid = matches.group(1)
 
-    if (folder_uid != ""):
+    if folder_uid != "":
         print("debug: quering with uid {}".format(folder_uid))
         response = get_folder(folder_uid, grafana_url, http_post_headers, verify_ssl, client_cert, debug)
         if isinstance(response[1], dict):
@@ -322,6 +338,8 @@ def get_folder_id(dashboard, grafana_url, http_post_headers, verify_ssl, client_
         except (KeyError):
             return 0
     else:
+        if 'folderId' in dashboard['meta'].keys():
+            return dashboard['meta']['folderId']
         return 0
 
 
